@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <!-- Outer subtle botanical paper crest -->
+  <rect x="6" y="6" width="108" height="108" rx="28" fill="#FAF9F4" stroke="#D3DFCE" stroke-width="2"/>
+  <rect x="12" y="12" width="96" height="96" rx="22" fill="#E7EDE3" fill-opacity="0.5"/>
+  
+  <!-- Subtle circular field ring -->
+  <circle cx="60" cy="60" r="40" stroke="#8FA88A" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.6"/>
+
+  <!-- Botanical Leaf Specimen (Primary Forest Canopy #355B46) -->
+  <path d="M60 22C42 22 32 38 32 58C32 76 46 92 60 98C74 92 88 76 88 58C88 38 78 22 60 22Z" fill="#355B46"/>
+  
+  <!-- Central Leaf Rachis / Spine -->
+  <path d="M60 26V96" stroke="#FAF9F4" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Left Side Lateral Veins -->
+  <path d="M60 40C52 38 43 42 41 47" stroke="#FAF9F4" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
+  <path d="M60 54C50 52 40 57 38 64" stroke="#FAF9F4" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
+  <path d="M60 68C52 68 44 74 43 80" stroke="#FAF9F4" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
+
+  <!-- Right Side Lateral Veins -->
+  <path d="M60 40C68 38 77 42 79 47" stroke="#FAF9F4" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
+  <path d="M60 54C70 52 80 57 82 64" stroke="#FAF9F4" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
+  <path d="M60 68C68 68 76 74 77 80" stroke="#FAF9F4" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
+
+  <!-- Analytical Diagnostic Crosshairs & Terracotta Accent -->
+  <circle cx="72" cy="46" r="9" fill="#FAF9F4" stroke="#C8795B" stroke-width="2.5"/>
+  <circle cx="72" cy="46" r="3" fill="#C8795B"/>
+  <line x1="72" y1="33" x2="72" y2="36" stroke="#C8795B" stroke-width="2" stroke-linecap="round"/>
+  <line x1="72" y1="56" x2="72" y2="59" stroke="#C8795B" stroke-width="2" stroke-linecap="round"/>
+  <line x1="59" y1="46" x2="62" y2="46" stroke="#C8795B" stroke-width="2" stroke-linecap="round"/>
+  <line x1="82" y1="46" x2="85" y2="46" stroke="#C8795B" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Botanical Foundation Roots Stem -->
+  <path d="M60 98C58 104 53 108 48 110" stroke="#796A59" stroke-width="2" stroke-linecap="round"/>
+  <path d="M60 98C62 104 67 108 72 110" stroke="#796A59" stroke-width="2" stroke-linecap="round"/>
+</svg>

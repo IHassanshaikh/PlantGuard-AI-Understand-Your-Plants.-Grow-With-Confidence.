@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <rect width="48" height="48" rx="12" fill="#355B46"/>
+  <!-- Leaf silhouette -->
+  <path d="M24 8C16 8 11 16 11 25C11 33 17 40 24 42C31 40 37 33 37 25C37 16 32 8 24 8Z" fill="#FAF9F4"/>
+  <path d="M24 10V41" stroke="#355B46" stroke-width="1.8" stroke-linecap="round"/>
+  <!-- Lateral veins -->
+  <path d="M24 18C20 16 16 19 15 22" stroke="#355B46" stroke-width="1.2" stroke-linecap="round"/>
+  <path d="M24 25C19 23 15 26 14 30" stroke="#355B46" stroke-width="1.2" stroke-linecap="round"/>
+  <path d="M24 18C28 16 32 19 33 22" stroke="#355B46" stroke-width="1.2" stroke-linecap="round"/>
+  <path d="M24 25C29 23 33 26 34 30" stroke="#355B46" stroke-width="1.2" stroke-linecap="round"/>
+  <!-- Diagnostic terracotta pinpoint -->
+  <circle cx="30" cy="20" r="4.5" fill="#FAF9F4" stroke="#C8795B" stroke-width="1.5"/>
+  <circle cx="30" cy="20" r="1.8" fill="#C8795B"/>
+</svg>

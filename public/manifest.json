@@ -1,0 +1,24 @@
+{
+  "short_name": "PlantGuard",
+  "name": "PlantGuard AI — Botanical Field Journal & Plant Doctor",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    },
+    {
+      "src": "/logo.svg",
+      "type": "image/svg+xml",
+      "sizes": "120x120 192x192 512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#FAF9F4",
+  "theme_color": "#355B46",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "categories": ["utilities", "lifestyle", "education", "productivity"],
+  "description": "Understand your plants. Grow with confidence. AI-powered plant health, on-device disease diagnosis, and botanical field journal."
+}

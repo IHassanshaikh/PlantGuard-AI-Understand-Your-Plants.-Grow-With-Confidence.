@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: 'Fraunces', Georgia, serif;
+  --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'IBM Plex Mono', Menlo, Monaco, Consolas, monospace;
+
+  /* Verdant Paper Color System */
+  --color-botanical-ink: #263D32;
+  --color-forest-canopy: #355B46;
+  --color-forest-hover: #2B4C3A;
+  --color-forest-muted: #E2ECE5;
+  --color-sage-leaf: #8FA88A;
+  --color-sage-light: #C2D3BD;
+  --color-misty-fern: #E7EDE3;
+  --color-misty-border: #D3DFCE;
+  --color-porcelain-paper: #FAF9F4;
+  --color-terracotta-bloom: #C8795B;
+  --color-terracotta-hover: #B5674A;
+  --color-apricot-dust: #F2DFD1;
+  --color-apricot-border: #E8CFC1;
+  --color-earth-bark: #796A59;
+  --color-earth-light: #A89B8D;
+  --color-meadow-white: #FFFFFF;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  section[id] {
+    scroll-margin-top: 80px;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--color-porcelain-paper);
+    color: var(--color-botanical-ink);
+  }
+
+  h1, h2, h3, h4, .font-serif {
+    font-family: var(--font-serif);
+  }
+
+  code, pre, .font-mono {
+    font-family: var(--font-mono);
+  }
+}
+
+/* Custom Botanical Editorial Utility Classes */
+.paper-texture {
+  background-color: #FAF9F4;
+  background-image: radial-gradient(#263d32 0.45px, transparent 0.45px);
+  background-size: 24px 24px;
+  background-opacity: 0.04;
+}
+
+.botanical-card {
+  background-color: #FFFFFF;
+  border: 1px solid #D3DFCE;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px -2px rgba(38, 61, 50, 0.05);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.botanical-card:hover {
+  box-shadow: 0 8px 30px -4px rgba(38, 61, 50, 0.08);
+  border-color: #8FA88A;
+}
+
+.botanical-pill {
+  border-radius: 9999px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
