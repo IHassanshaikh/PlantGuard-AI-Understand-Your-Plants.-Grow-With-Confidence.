@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 1200px;
+    height: 800px;
+    overflow: hidden;
+    background: #1B2B23;
+    font-family: 'DM Sans', sans-serif;
+    color: #FAF9F4;
+    position: relative;
+    display: flex;
+  }
+
+  /* Ambient radial botanical backdrops */
+  .glow-1 {
+    position: absolute;
+    top: -150px;
+    left: -100px;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(53,91,70,0.85) 0%, rgba(27,43,35,0) 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .glow-2 {
+    position: absolute;
+    bottom: -200px;
+    right: -100px;
+    width: 750px;
+    height: 750px;
+    background: radial-gradient(circle, rgba(74,115,90,0.45) 0%, rgba(200,121,91,0.15) 50%, rgba(27,43,35,0) 75%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .grid-pattern {
+    position: absolute;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(143,168,138,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(143,168,138,0.06) 1px, transparent 1px);
+    background-size: 32px 32px;
+    pointer-events: none;
+  }
+
+  /* Left Brand Content Column */
+  .left-col {
+    width: 530px;
+    height: 100%;
+    padding: 60px 48px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    z-index: 10;
+  }
+
+  .brand-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: rgba(231,237,227,0.12);
+    border: 1px solid rgba(143,168,138,0.35);
+    border-radius: 999px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: #A9C2A5;
+    text-transform: uppercase;
+    width: fit-content;
+  }
+  .badge-pulse {
+    width: 7px;
+    height: 7px;
+    background: #00FFB0;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #00FFB0;
+  }
+
+  .title-group {
+    margin-top: 18px;
+  }
+  .main-title {
+    font-family: 'Fraunces', serif;
+    font-size: 54px;
+    font-weight: 700;
+    line-height: 1.05;
+    color: #FAF9F4;
+    letter-spacing: -0.02em;
+  }
+  .main-title span {
+    color: #8FA88A;
+    font-style: italic;
+  }
+  .tagline {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 21px;
+    color: #F2DFD1;
+    margin-top: 14px;
+    font-weight: 300;
+  }
+  .desc {
+    margin-top: 14px;
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: #B5C4B4;
+  }
+
+  .feature-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 24px;
+  }
+  .pill {
+    padding: 7px 13px;
+    background: rgba(250,249,244,0.06);
+    border: 1px solid rgba(143,168,138,0.25);
+    border-radius: 8px;
+    font-size: 12px;
+    color: #E7EDE3;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+  }
+
+  .tech-footer {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(143,168,138,0.2);
+  }
+  .tech-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #8FA88A;
+    font-weight: 500;
+  }
+  .tech-item svg { width: 14px; height: 14px; }
+
+  /* Right Visual Column (Interactive UI Cards) */
+  .right-col {
+    flex: 1;
+    position: relative;
+    perspective: 1200px;
+  }
+
+  .mockup-main {
+    position: absolute;
+    top: 60px;
+    left: 40px;
+    width: 620px;
+    height: 480px;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 
+      0 25px 60px -15px rgba(0,0,0,0.7),
+      0 0 0 1px rgba(255,255,255,0.15);
+    transform: rotateY(-10deg) rotateX(4deg) rotateZ(-1.5deg);
+    background: #FAF9F4;
+  }
+  .mockup-main img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+  }
+
+  .mockup-sub {
+    position: absolute;
+    bottom: 50px;
+    right: 40px;
+    width: 440px;
+    height: 310px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 
+      0 30px 70px -10px rgba(0,0,0,0.85),
+      0 0 0 1px rgba(200,121,91,0.35);
+    transform: rotateY(-6deg) rotateX(2deg) rotateZ(1deg);
+    background: #FAF9F4;
+    z-index: 5;
+  }
+  .mockup-sub img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+  }
+
+  /* Floating Telemetry Badge */
+  .floating-telemetry {
+    position: absolute;
+    top: 42px;
+    right: 50px;
+    background: rgba(38,61,50,0.92);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(200,121,91,0.55);
+    padding: 12px 18px;
+    border-radius: 12px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .score-circle {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 3px solid #00C97B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    color: #FAF9F4;
+    background: rgba(0,201,123,0.15);
+  }
+  .telemetry-meta {
+    display: flex;
+    flex-direction: column;
+  }
+  .meta-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: #C8795B;
+    text-transform: uppercase;
+  }
+  .meta-val {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #FAF9F4;
+  }
+</style>
+</head>
+<body>
+  <div class="glow-1"></div>
+  <div class="glow-2"></div>
+  <div class="grid-pattern"></div>
+
+  <div class="left-col">
+    <div>
+      <div class="brand-badge">
+        <div class="badge-pulse"></div>
+        Google Gemini Multimodal AI
+      </div>
+
+      <div class="title-group">
+        <h1 class="main-title">PlantGuard <span>AI</span></h1>
+        <div class="tagline">Understand Your Plants. Grow With Confidence.</div>
+        <p class="desc">
+          A botanical field journal & hybrid AI plant pathology intelligence platform combining on-device computer vision with Google Gemini multimodal diagnostics.
+        </p>
+      </div>
+
+      <div class="feature-pills">
+        <div class="pill">🌿 Verdant Paper Design</div>
+        <div class="pill">🔬 Foliar Hotspot Vision</div>
+        <div class="pill">🩺 AI Plant Doctor Chat</div>
+        <div class="pill">💾 Local-First IndexedDB</div>
+        <div class="pill">🧪 Organic Dilution Calculator</div>
+      </div>
+    </div>
+
+    <div class="tech-footer">
+      <div class="tech-item">● React 19</div>
+      <div class="tech-item">● TypeScript 5.8</div>
+      <div class="tech-item">● Tailwind CSS v4</div>
+      <div class="tech-item">● Gemini 2.0 Flash</div>
+      <div class="tech-item">● MIT Open Source</div>
+    </div>
+  </div>
+
+  <div class="right-col">
+    <!-- Floating Telemetry Indicator -->
+    <div class="floating-telemetry">
+      <div class="score-circle">94</div>
+      <div class="telemetry-meta">
+        <span class="meta-title">SPECTRAL HEALTH SCORE</span>
+        <span class="meta-val">Optimal Foliar Vigor</span>
+      </div>
+    </div>
+
+    <!-- Main Mockup: Diagnosis & Hotspot Viewer -->
+    <div class="mockup-main">
+      <img src="file:///D:/PlantGuard AI/screenshots/04-diagnosis-report.png" alt="Diagnosis Report" />
+    </div>
+
+    <!-- Secondary Mockup: Plant Doctor Chat / Garden -->
+    <div class="mockup-sub">
+      <img src="file:///D:/PlantGuard AI/screenshots/06-ai-plant-doctor.png" alt="AI Plant Doctor" />
+    </div>
+  </div>
+</body>
+</html>
