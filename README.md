@@ -32,6 +32,14 @@ Crafted with the *Verdant Paper* editorial design language, client-side spectral
 
 Unlike cloud-dependent apps that require complex backend setups, PlantGuard AI is **Local-First**: it stores full-resolution high-res foliage photographs, treatment histories, and clinical diagnosis logs right inside your browser via asynchronous native **IndexedDB** (`PlantGuardDB`) with zero storage limits and 100% offline functionality.
 
+> [!NOTE]
+> ### 🔑 Testing the Live Web App
+> To test live multimodal AI diagnosis on the live deployment ([plantguard-ai-yourplantdoctor.vercel.app](https://plantguard-ai-yourplantdoctor.vercel.app/)), you will need a **free Google Gemini API key**:
+> 1. Get your free key in 30 seconds at [Google AI Studio](https://aistudio.google.com/).
+> 2. Open [PlantGuard AI](https://plantguard-ai-yourplantdoctor.vercel.app/) and click the **⚙️ Settings** icon in the top header.
+> 3. Paste your key in the **Google Gemini API Key** field and click **Save Settings** (your key is saved locally in your browser's IndexedDB/localStorage and is never sent to any third-party server).
+> 4. Upload or snap any plant photo to trigger real-time AI diagnosis!
+
 ---
 
 ## 📸 Visual Tour & Interface Gallery
