@@ -196,7 +196,7 @@ function analyzeCanvasPixels(dataUrl: string): Promise<LeafVisionFeatures> {
       try {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        const sampleSize = 100;
+        const sampleSize = 120;
         canvas.width = sampleSize;
         canvas.height = sampleSize;
 
@@ -220,32 +220,39 @@ function analyzeCanvasPixels(dataUrl: string): Promise<LeafVisionFeatures> {
           const b = data[i + 2];
           const a = data[i + 3];
 
-          if (a < 60) continue;
+          if (a < 50) continue;
 
-          // Reject neutral / high-key background or deep non-foliar black shadows
-          const isBackground =
-            (r > 240 && g > 240 && b > 235) ||
-            (r < 25 && g < 25 && b < 25) ||
-            (Math.abs(r - g) < 10 && Math.abs(g - b) < 10 && (r > 190 || r < 50));
+          // Reject neutral / high-key background, white paper, gray tables, or pitch black voids
+          const isBrightBackground = r > 235 && g > 235 && b > 230;
+          const isDarkVoid = r < 25 && g < 25 && b < 25;
+          const isNeutralGray = Math.abs(r - g) < 12 && Math.abs(g - b) < 12 && (r > 175 || r < 50);
 
-          if (isBackground) continue;
+          if (isBrightBackground || isDarkVoid || isNeutralGray) continue;
 
-          // 1. Necrosis / Dead brown lesions / Rust pustules / Scab spots
+          // Excess Green Index (standard agronomic formula)
+          const exG = 2 * g - r - b;
+
+          // 1. True Necrosis / Dead brown lesions / Rust pustules / Scab spots
+          // Optical rule: Brown/tan/rust ALWAYS requires Red to dominate over Green and Blue
           const isBrownNecrotic =
-            (r > 50 && r > b * 1.2 && (r - b) > 15 && (r >= g * 0.88) && g < 165) ||
-            (r > 110 && g < 130 && b < 75 && (r - g) > 15) ||
-            (r < 80 && g < 80 && b < 65 && r >= g && (r + g + b) < 190);
+            (r > 50 && r > g * 1.10 && r > b * 1.25 && (r - b) > 15) || // Tan / Brown / Rust
+            (r > 120 && g < 110 && b < 70 && (r - g) > 20) ||           // Orange rust pustule
+            (r < 75 && g < 65 && b < 55 && r >= g && exG < 5 && (r + g + b) > 55); // Dark necrotic lesion
 
-          // 2. Interveinal Chlorosis / Foliar yellowing
+          // 2. True Yellow Chlorosis (Iron/Magnesium/Nitrogen deficit)
+          // Both Red and Green are bright, Blue is depressed, and R is very close to G (yellow hue)
           const isYellowChlorotic =
             !isBrownNecrotic &&
-            r > 90 && g > 90 &&
-            b < Math.max(r, g) * 0.85 &&
-            (Math.abs(r - g) < 55 || (r > g && r - g < 60));
+            r > 115 && g > 110 &&
+            b < Math.min(r, g) * 0.75 &&
+            Math.abs(r - g) <= 40;
 
           // 3. Healthy photosynthetic green
-          const exG = 2 * g - r - b;
-          const isGreen = !isBrownNecrotic && !isYellowChlorotic && (g > r && g > b && exG > 10);
+          // Green channel is dominant: g > r and g > b
+          const isGreen = !isBrownNecrotic && !isYellowChlorotic && (
+            (g > r && g > b && exG > 10) ||
+            (g >= r && exG > 0 && g > b)
+          );
 
           // 4. Powdery mildew / foliar fungal blooms
           const isFungalWhite =
@@ -276,7 +283,7 @@ function analyzeCanvasPixels(dataUrl: string): Promise<LeafVisionFeatures> {
           greennessScore,
           chlorosisRatio,
           necroticRatio,
-          edgeSymmetry: 85,
+          edgeSymmetry: 88,
           detectedColorProfile: profile,
         });
       } catch (err) {
@@ -576,9 +583,12 @@ Profile: "${localFeatures.detectedColorProfile}".
 Evaluate strictly based on botanical pathology:
 - If necrotic lesions, brown/tan spots, bullseye patterns, or leaf yellowing/chlorosis are present, accurately diagnose the disease (e.g. Early Blight, Cercospora leaf spot, Apple scab, Anthracnose, Iron chlorosis, Rust, or Powdery mildew). Set severity to "Moderate Concern" or "Severe", healthScore < 75, and status accordingly.
 - Only if the foliage exhibits uniform greenness with cell turgor and zero disease lesions should you diagnose "Optimal Foliar Health" with severity "None (Healthy)" and healthScore >= 90.
+- If the specimen identity was not provided or is generic, also identify the plant common name and botanical species.
 
 Return ONLY valid JSON matching this exact structure:
 {
+  "identifiedPlantName": "Recognized plant common name (e.g. Fiddle Leaf Fig, Tomato)",
+  "identifiedSpecies": "Recognized botanical species (e.g. Ficus lyrata)",
   "diagnosisTitle": "Clear concise diagnosis title (e.g. Early Blight Confirmed)",
   "possibleDisease": "Scientific or common name of disease (or 'Optimal Foliar Health')",
   "severity": "Mild" | "Moderate Concern" | "Severe" | "None (Healthy)",
@@ -646,6 +656,8 @@ Return ONLY valid JSON matching this exact structure:
           }
 
           return {
+            plantName: (!plantName || plantName === 'Botanical Specimen') && parsed.identifiedPlantName ? parsed.identifiedPlantName : undefined,
+            species: (!species || species === 'Species unidentified') && parsed.identifiedSpecies ? parsed.identifiedSpecies : undefined,
             diagnosisTitle: parsed.diagnosisTitle,
             possibleDisease: parsed.possibleDisease,
             severity,
@@ -728,6 +740,8 @@ export async function executeHybridScan(
       finalResult = {
         ...finalResult,
         ...cloudRes,
+        plantName: cloudRes.plantName || finalResult.plantName,
+        species: cloudRes.species || finalResult.species,
         inferenceSource: 'cloud-gemini',
         inferenceLatencyMs: Math.round(performance.now() - startTime),
       };
