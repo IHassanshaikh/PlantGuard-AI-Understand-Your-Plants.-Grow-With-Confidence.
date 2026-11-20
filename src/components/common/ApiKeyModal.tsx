@@ -101,14 +101,24 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose, onSav
               <label className="block text-xs font-medium text-[#263D32]">
                 Google Gemini API Key
               </label>
-              <button
-                type="button"
-                onClick={() => setShowKey(!showKey)}
-                className="text-[11px] text-[#796A59] hover:text-[#263D32] flex items-center gap-1"
-              >
-                {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                <span>{showKey ? 'Hide' : 'Show'}</span>
-              </button>
+              <div className="flex items-center gap-3">
+                <a
+                  href="https://aistudio.google.com/app/apikey"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[11px] text-[#355B46] hover:text-[#2B4C3A] underline font-medium"
+                >
+                  Get Free Key ↗
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setShowKey(!showKey)}
+                  className="text-[11px] text-[#796A59] hover:text-[#263D32] flex items-center gap-1 cursor-pointer"
+                >
+                  {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  <span>{showKey ? 'Hide' : 'Show'}</span>
+                </button>
+              </div>
             </div>
             <div className="relative">
               <input

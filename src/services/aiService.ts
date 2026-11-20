@@ -35,6 +35,15 @@ export function isCloudAiAvailable(): boolean {
   return Boolean(key && key !== 'YOUR_GEMINI_API_KEY' && key.length > 10);
 }
 
+// Check if user has explicitly provided their own key (vs relying on default/fallback)
+export function hasUserApiKey(): boolean {
+  const localKey = localStorage.getItem('verdant_gemini_api_key');
+  if (localKey && localKey.trim().length > 10) return true;
+  const envKey = import.meta.env.VITE_GEMINI_API_KEY;
+  if (envKey && envKey !== 'YOUR_GEMINI_API_KEY' && envKey.trim().length > 10) return true;
+  return false;
+}
+
 // Live test for a provided or stored Gemini API key
 export async function testGeminiApiKey(apiKeyToTest?: string): Promise<{
   success: boolean;

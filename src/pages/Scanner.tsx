@@ -12,11 +12,14 @@ import {
   Sliders,
   Image as ImageIcon,
   Zap,
-  Info
+  Info,
+  Key,
+  ExternalLink,
+  Check
 } from 'lucide-react';
 import { SAMPLE_SPECIMENS } from '../services/sampleData';
 import { SpecimenSample, ScanResult, Plant } from '../types';
-import { executeHybridScan, isCloudAiAvailable, checkLocalGeminiNano } from '../services/aiService';
+import { executeHybridScan, isCloudAiAvailable, hasUserApiKey, checkLocalGeminiNano, testGeminiApiKey } from '../services/aiService';
 
 interface ScannerProps {
   onScanComplete: (result: ScanResult) => void;
@@ -35,6 +38,13 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete, targetPlant, o
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [nanoAvailable, setNanoAvailable] = useState<boolean>(false);
+  const [userHasKey, setUserHasKey] = useState<boolean>(() => hasUserApiKey());
+  const [showApiKeyPromptModal, setShowApiKeyPromptModal] = useState<boolean>(false);
+  const [promptApiKey, setPromptApiKey] = useState<string>('');
+  const [showPromptKey, setShowPromptKey] = useState<boolean>(false);
+  const [isTestingKey, setIsTestingKey] = useState<boolean>(false);
+  const [keyTestError, setKeyTestError] = useState<string | null>(null);
+  const [keySavedSuccess, setKeySavedSuccess] = useState<boolean>(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -141,8 +151,46 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete, targetPlant, o
     }
   };
 
-  const runScan = async () => {
+  const handleSaveKeyAndScan = async () => {
+    const trimmed = promptApiKey.trim();
+    if (!trimmed || trimmed.length < 10) {
+      setKeyTestError('Please paste a valid Gemini API key (starts with AIzaSy or AQ).');
+      return;
+    }
+    setIsTestingKey(true);
+    setKeyTestError(null);
+    const test = await testGeminiApiKey(trimmed);
+    setIsTestingKey(false);
+    if (!test.success) {
+      setKeyTestError(test.message || 'Key validation failed. Please check your key.');
+      return;
+    }
+    localStorage.setItem('verdant_gemini_api_key', trimmed);
+    setUserHasKey(true);
+    setKeySavedSuccess(true);
+    setTimeout(() => {
+      setShowApiKeyPromptModal(false);
+      setKeySavedSuccess(false);
+      if (selectedImage) {
+        runScan(false, true);
+      }
+    }, 600);
+  };
+
+  const handleProceedOffline = () => {
+    setShowApiKeyPromptModal(false);
+    runScan(true, true);
+  };
+
+  const runScan = async (forceOffline = false, keyBypass = false) => {
     if (!selectedImage) return;
+
+    // If user has not configured their own key and hasn't explicitly chosen offline mode:
+    if (!hasUserApiKey() && !forceOffline && !keyBypass) {
+      setShowApiKeyPromptModal(true);
+      return;
+    }
+
     setIsScanning(true);
 
     try {
@@ -151,7 +199,7 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete, targetPlant, o
         plantName || 'Botanical Specimen',
         species || 'Species Unspecified',
         symptoms,
-        preferCloud,
+        forceOffline ? false : preferCloud,
         (stage) => setCurrentStage(stage)
       );
 
@@ -184,6 +232,118 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete, targetPlant, o
           Capture high-resolution foliar photography to detect early disease markers, cellular chlorosis, and nutritional deficits before they spread.
         </p>
       </div>
+
+      {/* Required API Key & Steps Banner (visible when user hasn't configured key) */}
+      {!userHasKey && (
+        <div className="p-5 rounded-2xl bg-[#FBF6ED] border-2 border-[#E8CFC1] shadow-xs space-y-4 animate-in fade-in duration-300">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#F6EDE4] text-[#C8795B] flex items-center justify-center shrink-0 border border-[#E8CFC1]">
+                <Key className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-serif font-bold text-base sm:text-lg text-[#263D32]">
+                    Free Gemini API Key Required for Live AI Plant Doctor
+                  </h3>
+                  <span className="hidden sm:inline-block text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#E7EDE3] text-[#355B46] border border-[#8FA88A] font-semibold">
+                    100% FREE
+                  </span>
+                </div>
+                <p className="text-xs text-[#796A59] mt-0.5">
+                  Follow these 3 quick steps to unlock real-time multimodal leaf disease diagnosis & treatment plans.
+                </p>
+              </div>
+            </div>
+            <a
+              href="https://aistudio.google.com/app/apikey"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#355B46] hover:bg-[#2B4C3A] text-[#FAF9F4] text-xs font-medium transition-colors shrink-0 self-start sm:self-center shadow-xs"
+            >
+              <span>Get Free Key (Google AI Studio)</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </div>
+
+          {/* 3 Step Visual Flow */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#D3DFCE] space-y-1">
+              <span className="font-mono text-[10px] font-bold text-[#C8795B] px-1.5 py-0.5 rounded bg-[#FBF6ED] border border-[#E8CFC1] inline-block">
+                STEP 1
+              </span>
+              <p className="font-medium text-xs text-[#263D32]">Open Google AI Studio</p>
+              <p className="text-[11px] text-[#796A59]">
+                Sign in with any Google account and click <strong>"Create API Key"</strong> (no credit card needed).
+              </p>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#D3DFCE] space-y-1">
+              <span className="font-mono text-[10px] font-bold text-[#C8795B] px-1.5 py-0.5 rounded bg-[#FBF6ED] border border-[#E8CFC1] inline-block">
+                STEP 2
+              </span>
+              <p className="font-medium text-xs text-[#263D32]">Paste Your Key Below</p>
+              <p className="text-[11px] text-[#796A59]">
+                Paste your key into the quick setup bar below. It saves securely in your browser's private storage.
+              </p>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#D3DFCE] space-y-1">
+              <span className="font-mono text-[10px] font-bold text-[#C8795B] px-1.5 py-0.5 rounded bg-[#FBF6ED] border border-[#E8CFC1] inline-block">
+                STEP 3
+              </span>
+              <p className="font-medium text-xs text-[#263D32]">Scan Any Specimen</p>
+              <p className="text-[11px] text-[#796A59]">
+                Instant foliar pathology analysis, hotspot lesion coordinates, and custom organic recipes.
+              </p>
+            </div>
+          </div>
+
+          {/* Inline Quick Paste Bar */}
+          <div className="pt-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <input
+              type="password"
+              value={promptApiKey}
+              onChange={(e) => {
+                setPromptApiKey(e.target.value);
+                setKeyTestError(null);
+              }}
+              placeholder="Paste your Gemini API key here (starts with AIzaSy or AQ)..."
+              className="flex-1 px-3.5 py-2.5 rounded-xl border border-[#D3DFCE] bg-[#FFFFFF] text-xs font-mono text-[#263D32] focus:outline-hidden focus:ring-1 focus:ring-[#8FA88A]"
+            />
+            <button
+              type="button"
+              onClick={handleSaveKeyAndScan}
+              disabled={isTestingKey || !promptApiKey.trim()}
+              className="px-5 py-2.5 bg-[#355B46] hover:bg-[#2B4C3A] disabled:opacity-50 text-[#FAF9F4] text-xs font-medium rounded-xl transition-all shadow-xs shrink-0 cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              {isTestingKey ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  <span>Validating Key...</span>
+                </>
+              ) : keySavedSuccess ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-[#8FA88A]" />
+                  <span>Key Activated!</span>
+                </>
+              ) : (
+                <>
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Save & Enable Live AI</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {keyTestError && (
+            <p className="text-xs text-[#C8795B] flex items-center gap-1.5 bg-[#FFFFFF] p-2.5 rounded-xl border border-[#F2C2BA]">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{keyTestError}</span>
+            </p>
+          )}
+        </div>
+      )}
 
       {/* 1-Click Curated Specimens Strip */}
       <div className="space-y-3">
@@ -410,30 +570,31 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete, targetPlant, o
                   <span className="font-semibold text-[#263D32] flex items-center gap-1.5 flex-wrap">
                     <Cloud className="w-3.5 h-3.5 text-[#C8795B]" />
                     <span>Engage Cloud Gemini Flash</span>
-                    {cloudConfigured ? (
+                    {userHasKey ? (
                       <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-[#E7EDE3] text-[#355B46] border border-[#8FA88A]">
                         CONNECTED
                       </span>
                     ) : (
                       <button
                         type="button"
-                        onClick={onOpenSettings}
-                        className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-[#F2DFD1] text-[#796A59] border border-[#E8CFC1] hover:underline cursor-pointer"
+                        onClick={() => setShowApiKeyPromptModal(true)}
+                        className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#F2DFD1] text-[#C8795B] border border-[#E8CFC1] hover:bg-[#E8CFC1] cursor-pointer font-bold inline-flex items-center gap-1"
                       >
-                        SET API KEY
+                        <Key className="w-3 h-3" />
+                        <span>FREE KEY REQUIRED</span>
                       </button>
                     )}
                   </span>
                   <p className="text-[10px] text-[#796A59] mt-0.5">
-                    {cloudConfigured
+                    {userHasKey
                       ? 'Live Google Gemini multimodal intelligence actively connected'
-                      : 'Running on-device botanical vision. Connect Gemini API key for deep cloud diagnosis.'}
+                      : 'Free Gemini API key required for live AI pathology. Click to set up in 30 seconds.'}
                   </p>
                 </div>
                 <input
                   type="checkbox"
-                  checked={preferCloud && cloudConfigured}
-                  disabled={!cloudConfigured}
+                  checked={preferCloud && userHasKey}
+                  disabled={!userHasKey}
                   onChange={(e) => setPreferCloud(e.target.checked)}
                   className="rounded-sm text-[#355B46] focus:ring-[#8FA88A] w-4 h-4 cursor-pointer"
                 />
@@ -457,7 +618,7 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete, targetPlant, o
             </div>
           ) : (
             <button
-              onClick={runScan}
+              onClick={() => runScan(false, false)}
               disabled={!selectedImage}
               className={`w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl font-medium text-xs transition-all shadow-sm ${
                 selectedImage
@@ -471,6 +632,135 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete, targetPlant, o
           )}
         </div>
       </div>
+
+      {/* Required API Key Modal */}
+      {showApiKeyPromptModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#263D32]/50 backdrop-blur-xs">
+          <div className="relative w-full max-w-lg bg-[#FFFFFF] rounded-2xl border border-[#D3DFCE] shadow-2xl p-6 sm:p-8 animate-in fade-in zoom-in-95 duration-200">
+            <button
+              onClick={() => setShowApiKeyPromptModal(false)}
+              className="absolute top-5 right-5 p-1.5 rounded-lg text-[#796A59] hover:text-[#263D32] hover:bg-[#E7EDE3] transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-xl bg-[#F6EDE4] text-[#C8795B] flex items-center justify-center border border-[#E8CFC1]">
+                <Key className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#E7EDE3] text-[#355B46] border border-[#8FA88A]">
+                  FREE SETUP (30 SECONDS)
+                </span>
+                <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#263D32] mt-1">
+                  Gemini API Key Required
+                </h3>
+              </div>
+            </div>
+
+            <p className="text-xs text-[#796A59] leading-relaxed mb-5">
+              Live multimodal foliage pathology, early disease diagnosis, and clinical treatment generation require a free Google Gemini API key. Follow these 3 simple steps to activate live AI:
+            </p>
+
+            {/* Step-by-Step Instructions */}
+            <div className="space-y-3 mb-6">
+              <div className="p-3.5 rounded-xl bg-[#FAF9F4] border border-[#D3DFCE] flex items-start gap-3">
+                <span className="w-6 h-6 rounded-full bg-[#355B46] text-[#FAF9F4] text-xs font-mono font-bold flex items-center justify-center shrink-0">
+                  1
+                </span>
+                <div className="text-xs">
+                  <p className="font-semibold text-[#263D32]">Get your free Google Gemini API Key</p>
+                  <p className="text-[#796A59] mt-0.5 text-[11px]">Free tier, no credit card required, ready in under 30 seconds.</p>
+                  <a
+                    href="https://aistudio.google.com/app/apikey"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-lg bg-[#E7EDE3] hover:bg-[#D3DFCE] text-[#355B46] font-mono text-[11px] font-medium transition-colors"
+                  >
+                    <span>Open Google AI Studio</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-[#FAF9F4] border border-[#D3DFCE] flex items-start gap-3">
+                <span className="w-6 h-6 rounded-full bg-[#355B46] text-[#FAF9F4] text-xs font-mono font-bold flex items-center justify-center shrink-0">
+                  2
+                </span>
+                <div className="text-xs flex-1">
+                  <p className="font-semibold text-[#263D32]">Paste your Gemini API Key here</p>
+                  <p className="text-[#796A59] mt-0.5 text-[11px]">Saved privately in your browser's IndexedDB/localStorage.</p>
+                  <div className="mt-2 relative">
+                    <input
+                      type={showPromptKey ? 'text' : 'password'}
+                      value={promptApiKey}
+                      onChange={(e) => {
+                        setPromptApiKey(e.target.value);
+                        setKeyTestError(null);
+                      }}
+                      placeholder="Paste your key (starts with AIzaSy or AQ...)"
+                      className="w-full px-3 py-2 pr-16 rounded-lg border border-[#D3DFCE] bg-[#FFFFFF] text-xs font-mono text-[#263D32] focus:outline-hidden focus:ring-1 focus:ring-[#8FA88A]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPromptKey(!showPromptKey)}
+                      className="absolute right-2 top-2 text-[10px] text-[#796A59] hover:text-[#263D32] font-mono cursor-pointer"
+                    >
+                      {showPromptKey ? 'HIDE' : 'SHOW'}
+                    </button>
+                  </div>
+                  {keyTestError && (
+                    <p className="text-[11px] text-[#C8795B] mt-1.5 flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>{keyTestError}</span>
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-[#FAF9F4] border border-[#D3DFCE] flex items-start gap-3">
+                <span className="w-6 h-6 rounded-full bg-[#355B46] text-[#FAF9F4] text-xs font-mono font-bold flex items-center justify-center shrink-0">
+                  3
+                </span>
+                <div className="text-xs">
+                  <p className="font-semibold text-[#263D32]">Scan and verify botanical health</p>
+                  <p className="text-[#796A59] mt-0.5 text-[11px]">Real-time multimodal diagnosis with hotspot lesion coordinates.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="space-y-2.5">
+              <button
+                type="button"
+                onClick={handleSaveKeyAndScan}
+                disabled={isTestingKey || !promptApiKey.trim()}
+                className="w-full flex items-center justify-center gap-2 py-3 px-5 rounded-xl bg-[#355B46] hover:bg-[#2B4C3A] disabled:opacity-50 text-[#FAF9F4] text-xs font-medium transition-all shadow-sm cursor-pointer"
+              >
+                {isTestingKey ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Validating Key with Google Gemini...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 text-[#8FA88A]" />
+                    <span>Save Key & Run Live AI Scan</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleProceedOffline}
+                className="w-full py-2.5 px-4 rounded-xl border border-[#D3DFCE] hover:bg-[#FAF9F4] text-xs text-[#796A59] hover:text-[#263D32] transition-colors cursor-pointer"
+              >
+                Or proceed in On-Device Local Mode (Offline Heuristics)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
