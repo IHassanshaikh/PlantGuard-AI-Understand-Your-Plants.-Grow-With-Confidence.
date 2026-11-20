@@ -43,6 +43,12 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete, targetPlant })
     if (targetPlant) {
       setPlantName(targetPlant.name);
       setSpecies(targetPlant.species);
+      if (targetPlant.imageUrl) {
+        setSelectedImage(targetPlant.imageUrl);
+      }
+      if (targetPlant.notes) {
+        setSymptoms(targetPlant.notes);
+      }
     }
   }, [targetPlant]);
 
