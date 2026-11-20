@@ -21,9 +21,10 @@ import { executeHybridScan, isCloudAiAvailable, checkLocalGeminiNano } from '../
 interface ScannerProps {
   onScanComplete: (result: ScanResult) => void;
   targetPlant?: Plant | null;
+  onOpenSettings?: () => void;
 }
 
-export const Scanner: React.FC<ScannerProps> = ({ onScanComplete, targetPlant }) => {
+export const Scanner: React.FC<ScannerProps> = ({ onScanComplete, targetPlant, onOpenSettings }) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [plantName, setPlantName] = useState(targetPlant?.name || '');
   const [species, setSpecies] = useState(targetPlant?.species || '');
@@ -404,23 +405,39 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete, targetPlant })
 
             {/* Cloud Deep Analysis Switch */}
             <div className="pt-2 border-t border-[#D3DFCE]">
-              <label className="flex items-center justify-between cursor-pointer">
+              <div className="flex items-center justify-between">
                 <div>
-                  <span className="font-semibold text-[#263D32] flex items-center gap-1.5">
+                  <span className="font-semibold text-[#263D32] flex items-center gap-1.5 flex-wrap">
                     <Cloud className="w-3.5 h-3.5 text-[#C8795B]" />
                     <span>Engage Cloud Gemini Flash</span>
+                    {cloudConfigured ? (
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-[#E7EDE3] text-[#355B46] border border-[#8FA88A]">
+                        CONNECTED
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={onOpenSettings}
+                        className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-[#F2DFD1] text-[#796A59] border border-[#E8CFC1] hover:underline cursor-pointer"
+                      >
+                        SET API KEY
+                      </button>
+                    )}
                   </span>
                   <p className="text-[10px] text-[#796A59] mt-0.5">
-                    Perform deep multimodal cross-comparison for rare fungal variants
+                    {cloudConfigured
+                      ? 'Live Google Gemini multimodal intelligence actively connected'
+                      : 'Running on-device botanical vision. Connect Gemini API key for deep cloud diagnosis.'}
                   </p>
                 </div>
                 <input
                   type="checkbox"
-                  checked={preferCloud}
+                  checked={preferCloud && cloudConfigured}
+                  disabled={!cloudConfigured}
                   onChange={(e) => setPreferCloud(e.target.checked)}
                   className="rounded-sm text-[#355B46] focus:ring-[#8FA88A] w-4 h-4 cursor-pointer"
                 />
-              </label>
+              </div>
             </div>
           </div>
 

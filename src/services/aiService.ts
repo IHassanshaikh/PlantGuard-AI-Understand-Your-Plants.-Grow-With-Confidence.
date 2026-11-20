@@ -2,7 +2,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ScanResult, PlantStatus, InferenceSource, Plant, DoctorMessage } from '../types';
 import { SAMPLE_SPECIMENS } from './sampleData';
 
-// Provided Gemini API Key (configured via .env or settings fallback)
+// Provided Gemini API Key (configured via .env, Vercel Environment Variables, or Settings modal)
 const DEFAULT_GEMINI_KEY = '';
 
 // Candidate models ordered by active availability and speed
@@ -407,13 +407,13 @@ Notes: ${userNotes || 'None'}.
 Provide 3 bullet observations and primary suspected disease.`;
 
       const response = await session.prompt(promptText);
-      return buildDiagnosisFromFeatures(features, plantName, species, 'local-nano', response, sampleMatch);
+      return buildDiagnosisFromFeatures(features, plantName, species, 'local-nano', response, sampleMatch, userNotes);
     } catch (e) {
       console.warn('[Gemini Nano] Execution failed, falling back to local edge engine:', e);
     }
   }
 
-  return buildDiagnosisFromFeatures(features, plantName, species, 'local-edge', undefined, sampleMatch);
+  return buildDiagnosisFromFeatures(features, plantName, species, 'local-edge', undefined, sampleMatch, userNotes);
 }
 
 function buildDiagnosisFromFeatures(
@@ -422,7 +422,8 @@ function buildDiagnosisFromFeatures(
   species: string,
   source: InferenceSource,
   nanoSummaryText?: string,
-  sampleMatch?: (typeof SAMPLE_SPECIMENS)[0]
+  sampleMatch?: (typeof SAMPLE_SPECIMENS)[0],
+  userNotes?: string
 ) {
   let status: PlantStatus = 'healthy';
   let severity: ScanResult['severity'] = 'None (Healthy)';
@@ -435,6 +436,7 @@ function buildDiagnosisFromFeatures(
   ];
   const causes: string[] = [];
   const treatments: string[] = [];
+  const context = `${userNotes || ''} ${plantName || ''} ${species || ''} ${f.detectedColorProfile}`.toLowerCase();
 
   // 1. Direct Curated Specimen Match
   if (sampleMatch) {
@@ -460,9 +462,22 @@ function buildDiagnosisFromFeatures(
   else if (f.necroticRatio >= 14 || (f.necroticRatio >= 7 && f.chlorosisRatio >= 18)) {
     status = 'critical';
     severity = 'Severe';
-    disease = f.necroticRatio > 22 ? 'Advanced Foliar Blight (Alternaria / Phytophthora)' : 'Severe Fungal Leaf Lesions & Scab';
+
+    if (context.includes('scab') || context.includes('venturia') || context.includes('apple')) {
+      disease = 'Foliar Scab (Venturia inaequalis)';
+      title = `Severe Foliar Scab on ${plantName || 'Apple Foliage'}`;
+    } else if (context.includes('rust') || context.includes('pustule')) {
+      disease = 'Severe Foliar Rust (Pucciniales)';
+      title = `Severe Foliar Rust on ${plantName || 'Specimen'}`;
+    } else if (context.includes('blight') || context.includes('alternaria') || context.includes('tomato')) {
+      disease = 'Early Blight (Alternaria solani)';
+      title = `Severe Early Blight on ${plantName || 'Plant'}`;
+    } else {
+      disease = f.necroticRatio > 24 ? 'Advanced Foliar Blight (Alternaria / Phytophthora)' : 'Severe Fungal Lesions & Scab';
+      title = `Severe Foliar Pathology on ${plantName || 'Specimen'}`;
+    }
+
     healthScore = Math.max(28, Math.min(54, 100 - (f.chlorosisRatio * 1.0 + f.necroticRatio * 2.0)));
-    title = `Severe Foliar Pathology on ${plantName || 'Specimen'}`;
     observations.push(`High necrotic lesion density (${f.necroticRatio}% surface area) indicating active cell death.`);
     observations.push(`Chlorotic halo coverage (${f.chlorosisRatio}%) surrounding lesion margins.`);
     causes.push('Fungal spore germination favored by elevated leaf wetness or overhead irrigation.');
@@ -475,24 +490,50 @@ function buildDiagnosisFromFeatures(
   else if (f.necroticRatio >= 5) {
     status = 'attention';
     severity = 'Moderate Concern';
-    disease = 'Foliar Spotting & Micro-Lesions (Cercospora / Septoria)';
+
+    if (context.includes('mildew') || context.includes('white') || f.detectedColorProfile.includes('Powdery')) {
+      disease = 'Powdery Mildew (Erysiphales)';
+      title = `Powdery Mildew on ${plantName || 'Specimen'}`;
+      treatments.push('Apply potassium bicarbonate or sulfur-based organic foliar spray.');
+    } else if (context.includes('rust') || context.includes('orange')) {
+      disease = 'Foliar Rust Pustules (Pucciniaceae)';
+      title = `Foliar Rust on ${plantName || 'Specimen'}`;
+      treatments.push('Prune heavily pustuled foliage and apply copper bio-fungicide.');
+    } else if (context.includes('monstera') || context.includes('cercospora') || context.includes('edema')) {
+      disease = 'Cercospora Leaf Spot & Foliar Edema';
+      title = `Cercospora Leaf Spot on ${plantName || 'Monstera'}`;
+      treatments.push('Allow soil to dry down and improve ambient ventilation.');
+    } else {
+      disease = 'Foliar Spotting & Micro-Lesions (Cercospora / Septoria)';
+      title = `Foliar Leaf Spot on ${plantName || 'Specimen'}`;
+      treatments.push('Remove and safely discard spotted leaves.');
+      treatments.push('Increase spacing between plants to enhance cross-ventilation.');
+      treatments.push('Apply neem oil or potassium bicarbonate foliar spray.');
+    }
+
     healthScore = Math.max(55, Math.min(74, 100 - (f.chlorosisRatio * 0.9 + f.necroticRatio * 1.8)));
-    title = `Foliar Leaf Spot on ${plantName || 'Specimen'}`;
     observations.push(`Foliar inspection identified localized necrotic spotting (${f.necroticRatio}% coverage).`);
     observations.push(`Chlorophyll density is moderately impacted at ${f.greennessScore}%.`);
     causes.push('Prolonged moisture on leaf cuticles allowing fungal spore attachment.');
     causes.push('Splashing water droplets transferring microbial spores from soil.');
-    treatments.push('Remove and safely discard spotted leaves.');
-    treatments.push('Increase spacing between plants to enhance cross-ventilation.');
-    treatments.push('Apply neem oil or potassium bicarbonate foliar spray.');
   } 
   // 4. Chlorosis / Nutritional Deficit (Chlorosis >= 14%)
   else if (f.chlorosisRatio >= 14) {
     status = 'attention';
     severity = 'Mild';
-    disease = 'Interveinal Chlorosis / Micronutrient Deficiency';
+
+    if (context.includes('lemon') || context.includes('citrus') || context.includes('iron')) {
+      disease = 'Interveinal Iron Chlorosis (Fe Lockup)';
+      title = `Iron Chlorosis on ${plantName || 'Citrus Tree'}`;
+    } else if (context.includes('nitrogen') || context.includes('pale')) {
+      disease = 'Nitrogen Foliar Depletion';
+      title = `Nitrogen Deficiency on ${plantName || 'Plant'}`;
+    } else {
+      disease = 'Interveinal Chlorosis / Micronutrient Deficiency';
+      title = `Nutrient Chlorosis on ${plantName || 'Plant'}`;
+    }
+
     healthScore = Math.max(62, Math.min(78, 100 - f.chlorosisRatio * 1.1));
-    title = `Nutrient Chlorosis on ${plantName || 'Plant'}`;
     observations.push(`Foliar yellowing index (${f.chlorosisRatio}%) indicates reduced chlorophyll synthesis.`);
     observations.push('Vascular leaf veins remain greener than interveinal tissue.');
     causes.push('Micronutrient lockup (Iron or Magnesium) frequently tied to alkaline substrate pH (>7.0).');

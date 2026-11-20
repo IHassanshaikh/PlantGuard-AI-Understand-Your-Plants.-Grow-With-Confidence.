@@ -199,7 +199,11 @@ export function App() {
               )}
 
               {currentTab === 'scanner' && (
-                <Scanner onScanComplete={handleScanComplete} targetPlant={targetScanPlant} />
+                <Scanner
+                  onScanComplete={handleScanComplete}
+                  targetPlant={targetScanPlant}
+                  onOpenSettings={() => setIsSettingsModalOpen(true)}
+                />
               )}
 
               {currentTab === 'garden' && (
